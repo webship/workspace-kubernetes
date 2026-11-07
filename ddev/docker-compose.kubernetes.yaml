@@ -1,0 +1,7 @@
+# Kubernetes's config, shared FROM THE HOST into the dashboard container, so the verbs that run from
+# the dashboard see the same contexts and sessions the host does.
+services:
+  web:
+    volumes:
+      - "${HOME}/.local/bin:/host-local-bin:ro"
+      - "${HOME}/.kube:/home/${USER}/.kube:rw"
