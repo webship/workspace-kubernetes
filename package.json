@@ -1,12 +1,14 @@
 {
-  "name": "@webship/workspace-kubernetes",
-  "version": "1.0.0",
-  "description": "Kubernetes for Webship Workspace: the K8S menu on every project with manifests (a k8s/ or kubernetes/ folder, a kustomization, or a Helm chart): apply, delete, pods, logs, a shell in a pod, describe, the current context. A runtime of @webship/workspace-container.",
+  "name": "@webship.co/workspace-kubernetes",
+  "version": "1.0.0-alpha1",
+  "description": "Kubernetes for Webship Workspace: the K8S menu on every project with manifests (a k8s/ or kubernetes/ folder, a kustomization, or a Helm chart): apply, delete, pods, logs, a shell in a pod, describe, the current context. A runtime of @webship.co/workspace-container.",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
-  "private": true,
   "license": "ISC",
-  "repository": "github:webship/workspace-kubernetes",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webship/workspace-kubernetes.git"
+  },
   "files": [
     "dist/src",
     "features",
@@ -46,11 +48,14 @@
     }
   },
   "dependencies": {
-    "@webship/workspace-container": "github:webship/workspace-container#1.0.x"
+    "@webship.co/workspace-container": "^1.0.0-alpha1"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "@webship/workspace-plugin-api": "github:webship/workspace-plugin-api#1.0.x",
+    "@webship.co/workspace-plugin-api": "^1.0.0-alpha1",
     "typescript": "^5.9.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
