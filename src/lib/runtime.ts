@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { ContainerProject, ContainerRuntime } from '@webship/workspace-container';
+import type { ContainerProject, ContainerRuntime } from '@webship.co/workspace-container';
 
 interface K8sProject extends ContainerProject { kind: 'manifests' | 'kustomize' | 'helm'; namespace: string; app: string }
 

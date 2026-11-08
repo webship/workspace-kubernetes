@@ -1,9 +1,9 @@
-# @webship/workspace-kubernetes
+# @webship.co/workspace-kubernetes
 
 Kubernetes for the [Webship Workspace](https://github.com/webship/workspace) dashboard: the **K8S**
 menu on every project folder that carries Kubernetes manifests (k8s/, kubernetes/, kustomization.yaml or Chart.yaml), with the runtime's verbs as terminal sessions in
 the project, the up/down caption and the site link, and "Scaffold a k8s/ folder with a Deployment and a Service here" when a new folder is made.
-A runtime of [`@webship/workspace-container`](https://github.com/webship/workspace-container).
+A runtime of [`@webship.co/workspace-container`](https://github.com/webship/workspace-container).
 
 A project is a Kubernetes project when it carries `k8s/` or `kubernetes/` (plain manifests), a `kustomization.yaml` (kustomize) or a `Chart.yaml` (Helm). The namespace and the app name are read from the first manifest's metadata; the host's `~/.kube` is mounted into the dashboard container so the verbs use the same contexts.
 
