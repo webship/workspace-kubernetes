@@ -16,6 +16,17 @@ bash core/scripts/plugins.sh --activate kubernetes
 bash core/scripts/plugins.sh --install kubernetes
 ```
 
+## What it needs
+
+On the machine this plugin needs `kubectl` (https://kubernetes.io/docs/tasks/tools/), and its manifest says so (`needs.commands`). The workspace reports it and never installs it:
+
+```bash
+bash core/scripts/plugins.sh --check kubernetes      # found, with its version, or missing, with how to install it
+webship-workspace doctor                        # the same for the core and every plugin
+```
+
+It needs no other plugin: its menu is on the project rows of whatever folders the workspace has.
+
 ## The verbs
 
 | Verb | Command |

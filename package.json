@@ -26,6 +26,14 @@
   "workspacePlugin": {
     "name": "kubernetes",
     "label": "Kubernetes",
+    "needs": {
+      "commands": [
+        {
+          "command": "kubectl",
+          "hint": "https://kubernetes.io/docs/tasks/tools/"
+        }
+      ]
+    },
     "typeActions": {
       "kubernetes": [
         "sites",
