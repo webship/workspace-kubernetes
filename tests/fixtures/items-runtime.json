@@ -1,0 +1,48 @@
+{
+  "variants": [
+    {
+      "title": "Plain manifests, in `k8s/` (the same with `kubernetes/`)",
+      "sample": {
+        "file": "k8s",
+        "kind": "manifests",
+        "namespace": "<namespace>",
+        "app": "<app>",
+        "name": "<namespace>/<app>"
+      }
+    },
+    {
+      "title": "A kustomization",
+      "sample": {
+        "file": "kustomization.yaml",
+        "kind": "kustomize",
+        "namespace": "<namespace>",
+        "app": "<app>",
+        "name": "<namespace>/<app>"
+      }
+    },
+    {
+      "title": "A Helm chart",
+      "sample": {
+        "file": "Chart.yaml",
+        "kind": "helm",
+        "namespace": "<namespace>",
+        "app": "<app>",
+        "name": "<namespace>/<app>"
+      }
+    }
+  ],
+  "readonly": [
+    "context",
+    "describe",
+    "status"
+  ],
+  "handover": [
+    "logs",
+    "shell"
+  ],
+  "export": "kubernetesRuntime",
+  "find": "ls -d Chart.yaml kustomization.yaml kustomization.yml k8s/ kubernetes/ 2>/dev/null",
+  "helper": [
+    "helm"
+  ]
+}

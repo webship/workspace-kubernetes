@@ -14,6 +14,12 @@ import { kubernetesRuntime } from './lib/runtime';
 
 export { kubernetesRuntime };
 
+/** The AI items the installer places: agents in ai-agents/, skills in ai-skills/, commands in ai-commands/, prompts in ai-prompts/. */
+export const AGENTS: string[] = ['kubernetes-operator'];
+export const SKILLS: string[] = ['kubernetes-menu'];
+export const AI_COMMANDS: string[] = ['kubernetes-status'];
+export const PROMPTS: string[] = ['kubernetes-up-and-check'];
+
 export function register(api: PluginApi): void {
   registerContainer(api, kubernetesRuntime);
 }
