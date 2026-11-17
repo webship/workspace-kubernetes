@@ -13,6 +13,7 @@ import os from 'os';
 import path from 'path';
 
 import * as plugin from '../src/index';
+import { CONTEXT_CHECK } from '../src/lib/runtime';
 
 // Compiled, these tests run from dist/tests, so the package root is one folder further up.
 const PKG = fs.existsSync(path.join(__dirname, '..', 'package.json')) ? path.join(__dirname, '..') : path.join(__dirname, '..', '..');
@@ -142,7 +143,9 @@ const CFG = {
   checkpoints: [] as string[],
 };
 type Verb = { key: string; label: string; kind: string; danger: boolean; cmd: string };
-const verbsOf = (sample: any): Verb[] => Object.entries(runtime.verbs as Record<string, any>).map(([key, v]) => ({ key, label: v.label, kind: v.kind, danger: !!v.danger, cmd: v.cmd(sample, sample.name) }));
+// Each verb first asks kubectl for its context (#20); what the items name is the verb's own command after that check.
+const ownCommand = (line: string) => String(line).replace(CONTEXT_CHECK, '');
+const verbsOf = (sample: any): Verb[] => Object.entries(runtime.verbs as Record<string, any>).map(([key, v]) => ({ key, label: v.label, kind: v.kind, danger: !!v.danger, cmd: ownCommand(v.cmd(sample, sample.name)) }));
 const ALL: Verb[] = RT.variants.flatMap((v) => verbsOf(v.sample));
 const SKILL = `ai/skills/${P}-menu/SKILL.md`;
 

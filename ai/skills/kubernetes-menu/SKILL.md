@@ -97,6 +97,7 @@ The plugin has no settings file. `kubectl` is installed outside the workspace: h
 ## Traps
 
 - **The verbs act on the current context of `kubectl`**, whatever cluster that is. The entry **Current context** says which; look before **Apply** and before **Delete the resources**.
+- **No context, no verb**: every entry first asks `kubectl config current-context`. With none (no cluster set up on this machine) it answers "kubectl has no current context, so there is no cluster to talk to", with the step that fixes it (the cluster's kubeconfig in `~/.kube/config`, or a local cluster, then `kubectl config use-context <name>`), and runs nothing else. The caption is then `?`.
 - **The stop entry of this menu deletes**: there is no stop that keeps the resources. It is drawn in red.
 - **The app is found by the label `app=<app>`**: logs, the rollout and the caption select on it. A project whose pods carry another label shows `down` while it runs.
 - **The menu has no site link**: the plugin reads no ingress from the files.
