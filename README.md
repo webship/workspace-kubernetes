@@ -35,7 +35,7 @@ How the items are laid out and checked: [docs/plugin-items-pattern.md](docs/plug
 
 ## What it needs
 
-On the machine this plugin needs `kubectl` (https://kubernetes.io/docs/tasks/tools/), and its manifest says so (`needs.commands`). The workspace reports it and never installs it:
+On the machine this plugin needs `kubectl` (https://kubernetes.io/docs/tasks/tools/), and its manifest says so (`needs.commands`). A project that is a Helm chart (`Chart.yaml`) also needs `helm` for Apply and Delete the resources (https://helm.sh/docs/intro/install/): the manifest names it among what a part of the plugin uses (`suggests.commands`), and those two entries say so when it is missing. The workspace reports both and never installs them:
 
 ```bash
 bash core/scripts/plugins.sh --check kubernetes      # found, with its version, or missing, with how to install it

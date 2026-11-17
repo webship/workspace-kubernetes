@@ -15,8 +15,9 @@ const walk = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: tru
 test("the manifest says what the plugin needs: the plugins and the commands it cannot work without, and what a part of it uses", () => {
   assert.deepStrictEqual(manifest.needs, {'plugins': ['ai-agents', 'ai-skills', 'ai-commands', 'ai-prompts'], 'commands': [{'command': 'kubectl', 'hint': 'https://kubernetes.io/docs/tasks/tools/'}]});
   for (const kind of Object.keys(manifest.ai)) assert.ok(manifest.ai[kind].length > 0, `it ships ${kind}, which is why it needs the folder they are placed in`);
-  assert.deepStrictEqual(manifest.suggests, undefined);
+  // helm is what Apply and Delete run on a Helm chart, and only there (#7).
+  assert.deepStrictEqual(manifest.suggests, { commands: [{ command: 'helm', hint: 'https://helm.sh/docs/intro/install/', for: 'Apply and Delete the resources on a Helm chart' }] });
   const sources = ['commands', 'scripts', 'src'].flatMap((d) => (fs.existsSync(path.join(PKG, d)) ? walk(path.join(PKG, d)) : [])).map((f) => fs.readFileSync(f, 'utf8')).join('\n');
-  for (const command of ['kubectl']) assert.match(sources, new RegExp(`(^|[^A-Za-z0-9_-])${command}([^A-Za-z0-9_-]|$)`, 'm'), `${command} is called by the plugin`);
+  for (const command of ['kubectl', 'helm']) assert.match(sources, new RegExp(`(^|[^A-Za-z0-9_-])${command}([^A-Za-z0-9_-]|$)`, 'm'), `${command} is called by the plugin`);
   assert.match(fs.readFileSync(path.join(PKG, 'README.md'), 'utf8'), /^## What it needs$/m, 'and the README says so');
 });
