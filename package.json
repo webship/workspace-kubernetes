@@ -42,6 +42,15 @@
         }
       ]
     },
+    "suggests": {
+      "commands": [
+        {
+          "command": "helm",
+          "hint": "https://helm.sh/docs/intro/install/",
+          "for": "Apply and Delete the resources on a Helm chart"
+        }
+      ]
+    },
     "typeActions": {
       "kubernetes": [
         "sites",

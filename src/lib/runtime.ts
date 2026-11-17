@@ -44,6 +44,9 @@ export const NO_CONTEXT = 'kubectl has no current context, so there is no cluste
 export const CONTEXT_CHECK = `kubectl config current-context >/dev/null 2>&1 || { echo "${NO_CONTEXT}"; exit 1; }; `;
 const withContext = (line: string) => `${CONTEXT_CHECK}${line}`;
 
+/** What Apply and Delete run first on a Helm chart (#7): helm is not kubectl, and only a chart needs it. */
+export const HELM_CHECK = 'command -v helm >/dev/null 2>&1 || { echo "helm is not installed, and this project is a Helm chart (Chart.yaml): https://helm.sh/docs/intro/install/"; exit 1; }; ';
+
 export const kubernetesRuntime: ContainerRuntime = {
   id: 'kubernetes',
   label: 'K8S',
@@ -60,8 +63,8 @@ export const kubernetesRuntime: ContainerRuntime = {
     return /Running/.test(String(out.stdout)) ? 'up' : 'down';
   },
   verbs: {
-    start: { label: 'Apply', icon: 'play', kind: 'start', cmd: (p) => { const k = p as K8sProject; return withContext(k.kind === 'helm' ? `helm upgrade --install ${k.app} . ${ns(p)} --create-namespace` : k.kind === 'kustomize' ? `kubectl apply -k .` : `kubectl apply -f ${k.file}/`); } },
-    stop: { label: 'Delete the resources', icon: 'trash', kind: 'stop', danger: true, cmd: (p) => { const k = p as K8sProject; return withContext(k.kind === 'helm' ? `helm uninstall ${k.app} ${ns(p)}` : k.kind === 'kustomize' ? `kubectl delete -k .` : `kubectl delete -f ${k.file}/`); } },
+    start: { label: 'Apply', icon: 'play', kind: 'start', cmd: (p) => { const k = p as K8sProject; return withContext(k.kind === 'helm' ? `${HELM_CHECK}helm upgrade --install ${k.app} . ${ns(p)} --create-namespace` : k.kind === 'kustomize' ? `kubectl apply -k .` : `kubectl apply -f ${k.file}/`); } },
+    stop: { label: 'Delete the resources', icon: 'trash', kind: 'stop', danger: true, cmd: (p) => { const k = p as K8sProject; return withContext(k.kind === 'helm' ? `${HELM_CHECK}helm uninstall ${k.app} ${ns(p)}` : k.kind === 'kustomize' ? `kubectl delete -k .` : `kubectl delete -f ${k.file}/`); } },
     restart: { label: 'Rollout restart', icon: 'refresh', kind: 'restart', cmd: (p) => withContext(`kubectl rollout restart deployment ${ns(p)} -l app=${app(p)} && kubectl rollout status deployment ${ns(p)} -l app=${app(p)}`) },
     status: { label: 'Pods, services, ingress', icon: 'info', kind: 'status', cmd: (p) => withContext(`kubectl get pods,svc,ingress ${ns(p)} -o wide`) },
     logs: { label: 'Logs (follow)', icon: 'file-text', kind: 'logs', cmd: (p) => withContext(`kubectl logs ${ns(p)} -l app=${app(p)} -f --tail=200 --all-containers`) },
