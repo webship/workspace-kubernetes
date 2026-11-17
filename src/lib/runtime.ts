@@ -34,6 +34,16 @@ export function detectK8s(dir: string): K8sProject | null {
 const ns = (p: ContainerProject) => `-n ${(p as K8sProject).namespace}`;
 const app = (p: ContainerProject) => (p as K8sProject).app;
 
+/**
+ * Asked before every verb that talks to a cluster (#20). Without a current context kubectl falls back to
+ * localhost:8080 and prints its own internals ("couldn't get current server API group list…", "the connection
+ * to the server localhost:8080 was refused"); this says it in one sentence, with the step that fixes it.
+ */
+export const NO_CONTEXT = 'kubectl has no current context, so there is no cluster to talk to. Add your cluster\'s kubeconfig to ~/.kube/config (or start a local one: kind create cluster, minikube start), then: kubectl config use-context <name>';
+/** What every verb runs first: the context, or the sentence and exit 1. The verb's own command follows it. */
+export const CONTEXT_CHECK = `kubectl config current-context >/dev/null 2>&1 || { echo "${NO_CONTEXT}"; exit 1; }; `;
+const withContext = (line: string) => `${CONTEXT_CHECK}${line}`;
+
 export const kubernetesRuntime: ContainerRuntime = {
   id: 'kubernetes',
   label: 'K8S',
@@ -42,19 +52,22 @@ export const kubernetesRuntime: ContainerRuntime = {
   cliHint: 'https://kubernetes.io/docs/tasks/tools/',
   detect: (dir) => detectK8s(dir),
   state: async (p, dir, lib) => {
+    // No context: there is nothing to ask, and kubectl would wait on localhost:8080 for the answer.
+    const ctx = await lib.run('kubectl', ['config', 'current-context'], dir, { timeoutMs: 10 * 1000 });
+    if (!ctx.ok) return 'unknown';
     const out = await lib.run('kubectl', ['get', 'pods', '-n', (p as K8sProject).namespace, '-l', `app=${app(p)}`, '--no-headers'], dir, { timeoutMs: 20 * 1000 });
     if (!out.ok) return 'unknown';
     return /Running/.test(String(out.stdout)) ? 'up' : 'down';
   },
   verbs: {
-    start: { label: 'Apply', icon: 'play', kind: 'start', cmd: (p) => { const k = p as K8sProject; return k.kind === 'helm' ? `helm upgrade --install ${k.app} . ${ns(p)} --create-namespace` : k.kind === 'kustomize' ? `kubectl apply -k .` : `kubectl apply -f ${k.file}/`; } },
-    stop: { label: 'Delete the resources', icon: 'trash', kind: 'stop', danger: true, cmd: (p) => { const k = p as K8sProject; return k.kind === 'helm' ? `helm uninstall ${k.app} ${ns(p)}` : k.kind === 'kustomize' ? `kubectl delete -k .` : `kubectl delete -f ${k.file}/`; } },
-    restart: { label: 'Rollout restart', icon: 'refresh', kind: 'restart', cmd: (p) => `kubectl rollout restart deployment ${ns(p)} -l app=${app(p)} && kubectl rollout status deployment ${ns(p)} -l app=${app(p)}` },
-    status: { label: 'Pods, services, ingress', icon: 'info', kind: 'status', cmd: (p) => `kubectl get pods,svc,ingress ${ns(p)} -o wide` },
-    logs: { label: 'Logs (follow)', icon: 'file-text', kind: 'logs', cmd: (p) => `kubectl logs ${ns(p)} -l app=${app(p)} -f --tail=200 --all-containers` },
-    shell: { label: 'Shell in the deployment', icon: 'terminal', kind: 'shell', cmd: (p) => `kubectl exec -it ${ns(p)} deploy/${app(p)} -- sh` },
-    describe: { label: 'Describe the deployment', icon: 'file-edit', kind: 'other', cmd: (p) => `kubectl describe deploy ${ns(p)} ${app(p)}` },
-    context: { label: 'Current context', icon: 'world', kind: 'other', cmd: () => 'kubectl config current-context && kubectl cluster-info' },
+    start: { label: 'Apply', icon: 'play', kind: 'start', cmd: (p) => { const k = p as K8sProject; return withContext(k.kind === 'helm' ? `helm upgrade --install ${k.app} . ${ns(p)} --create-namespace` : k.kind === 'kustomize' ? `kubectl apply -k .` : `kubectl apply -f ${k.file}/`); } },
+    stop: { label: 'Delete the resources', icon: 'trash', kind: 'stop', danger: true, cmd: (p) => { const k = p as K8sProject; return withContext(k.kind === 'helm' ? `helm uninstall ${k.app} ${ns(p)}` : k.kind === 'kustomize' ? `kubectl delete -k .` : `kubectl delete -f ${k.file}/`); } },
+    restart: { label: 'Rollout restart', icon: 'refresh', kind: 'restart', cmd: (p) => withContext(`kubectl rollout restart deployment ${ns(p)} -l app=${app(p)} && kubectl rollout status deployment ${ns(p)} -l app=${app(p)}`) },
+    status: { label: 'Pods, services, ingress', icon: 'info', kind: 'status', cmd: (p) => withContext(`kubectl get pods,svc,ingress ${ns(p)} -o wide`) },
+    logs: { label: 'Logs (follow)', icon: 'file-text', kind: 'logs', cmd: (p) => withContext(`kubectl logs ${ns(p)} -l app=${app(p)} -f --tail=200 --all-containers`) },
+    shell: { label: 'Shell in the deployment', icon: 'terminal', kind: 'shell', cmd: (p) => withContext(`kubectl exec -it ${ns(p)} deploy/${app(p)} -- sh`) },
+    describe: { label: 'Describe the deployment', icon: 'file-edit', kind: 'other', cmd: (p) => withContext(`kubectl describe deploy ${ns(p)} ${app(p)}`) },
+    context: { label: 'Current context', icon: 'world', kind: 'other', cmd: () => withContext('kubectl config current-context && kubectl cluster-info') },
   },
   init: { label: 'Scaffold a k8s/ folder with a Deployment and a Service here', cmd: (name) => `mkdir -p k8s && [ -e k8s/deployment.yaml ] || printf 'apiVersion: apps/v1\\nkind: Deployment\\nmetadata:\\n  name: ${name}\\n  namespace: default\\n  labels:\\n    app: ${name}\\nspec:\\n  replicas: 1\\n  selector:\\n    matchLabels:\\n      app: ${name}\\n  template:\\n    metadata:\\n      labels:\\n        app: ${name}\\n    spec:\\n      containers:\\n        - name: web\\n          image: nginx:alpine\\n          ports:\\n            - containerPort: 80\\n---\\napiVersion: v1\\nkind: Service\\nmetadata:\\n  name: ${name}\\n  namespace: default\\nspec:\\n  selector:\\n    app: ${name}\\n  ports:\\n    - port: 80\\n' > k8s/deployment.yaml`, help: 'One nginx Deployment and its Service, to edit.' },
   menuNote: 'The host ~/.kube is mounted: the verbs use the same contexts',
